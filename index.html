@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>URL Shortener</title>
+</head>
+<body>
+    <h1>URL Shortener</h1>
+    <form name="generateForm" id="generateForm" enctype="multipart/form-data" method="post">
+        <p class="help-text" id="helper"></p>
+        <input type="url" name="url" id="url" placeholder="include https://" required/>
+        <button type="submit">Shorten</button>
+    </form>
+
+</body>
+<script type="text/javascript" src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+<script type="text/javascript">
+    $(document).ready(function(){
+        $('button[type="submit"]').text('Shorten').prop('disabled',false);
+        $('form#generateForm').submit(function(e){
+            e.preventDefault();
+            var inputUrl = $('input#url').val();
+            if(typeof inputUrl !== undefined && inputUrl !== null && inputUrl !== ''){
+                $.ajax({
+                  type: 'POST',
+                  url: "ShortHandler.php",
+                  async: true,
+                  data: {
+                    url: inputUrl,
+                    action: 'generate'
+                  },
+                  success: function(data) { 
+                    //console.log(data);
+                    // debugger;
+                    if(parseInt(data.statusCode) == 200 || parseInt(data.statusCode) == 100){ 
+                        var xt_url = data.shortUrl, 
+                            xt_lnk = data.shortLink, 
+                            xt_msg = data.statusMessage;
+                        var msg = xt_msg;
+                        if(parseInt(data.statusCode) == 100) $('p#helper').text(`Copy the shorten URL ${xt_url} but ${xt_msg}`); 
+                        else $('p#helper').text(`Copy the shorten URL ${xt_url}`); 
+                        $('button[type="submit"]').text('Shorten');
+                        $('form#generateForm').trigger("reset");
+
+                    }else{
+                        $('p#helper').text(data.statusMessage).css('color','red');   
+                    }
+                  },
+                  beforeSend: function(data) { 
+                    $('button[type="submit"]').text('Shortening...').prop('disabled',true);
+                  },
+                  error: function(xhr, ajaxOptions, thrownError) { 
+                    // debugger;
+                    $('p#helper').html(`ERROR :: ${ajaxOptions} <br/> ${thrownError}`).css('color','red');
+                    console.error(xhr);
+                    return false;
+                  },
+                  complete: function(){
+                    $('button[type="submit"]').text('Shorten').prop('disabled',false);
+                  }
+                });
+            }else{
+                $('p#helper').text('Provide the URL').hide(5000);
+                $('input#url').focus();
+                return false;
+            }
+        });
+    });
+</script>
+</html>
